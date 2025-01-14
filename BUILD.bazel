@@ -1,0 +1,19 @@
+cc_library(
+    name = "maelstrom_node",
+    srcs = [
+        "src/message.cpp",
+        "src/node.cpp",
+    ],
+    hdrs = glob(["include/maelstrom-node/**/*.hpp"]),
+    copts = [
+        "-std=c++23",
+    ],
+    includes = ["include"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "@boost//:algorithm",
+        "@boost//:asio",
+        "@nlohmann_json//:json",
+        "@spdlog",
+    ],
+)

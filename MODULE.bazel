@@ -1,0 +1,25 @@
+module(
+    name = "maelstrom_node",
+    version = "1.0.0",
+    compatibility_level = 1,
+)
+
+# C++ toolchain
+
+# 3rd-party C++ libraries
+bazel_dep(name = "rules_boost", repo_name = "com_github_nelhage_rules_boost")
+archive_override(
+    module_name = "rules_boost",
+    integrity = "sha256-ZLcmvYKc2FqgLvR96ApPXxp8+sXKqhBlCK66PY/uFIo=",
+    strip_prefix = "rules_boost-e3adfd8d6733c914d2b91a65fb7175af09602281",
+    urls = ["https://github.com/nelhage/rules_boost/archive/e3adfd8d6733c914d2b91a65fb7175af09602281.tar.gz"],
+)
+
+non_module_boost_repositories = use_extension("@com_github_nelhage_rules_boost//:boost/repositories.bzl", "non_module_dependencies")
+use_repo(
+    non_module_boost_repositories,
+    "boost",
+)
+
+bazel_dep(name = "spdlog", version = "1.15.0.bcr.3")
+bazel_dep(name = "nlohmann_json", version = "3.11.3.bcr.1")
