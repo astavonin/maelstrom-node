@@ -1,5 +1,5 @@
-#include "include/maelstrom-node/node.hpp"
-#include "include/maelstrom-node/message.hpp"
+#include "maelstrom-node/node.hpp"
+#include "maelstrom-node/message.hpp"
 
 #include <boost/algorithm/string.hpp>
 #include <ctime>

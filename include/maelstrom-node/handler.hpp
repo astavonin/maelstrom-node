@@ -1,6 +1,6 @@
 #pragma once
 
-#include "include/maelstrom-node/message.hpp"
+#include "maelstrom-node/message.hpp"
 
 #include <memory>
 

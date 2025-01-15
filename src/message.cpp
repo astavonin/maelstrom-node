@@ -1,4 +1,4 @@
-#include "include/maelstrom-node/message.hpp"
+#include "maelstrom-node/message.hpp"
 
 #include <algorithm>
 #include <boost/algorithm/string.hpp>
