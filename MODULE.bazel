@@ -23,3 +23,12 @@ use_repo(
 
 bazel_dep(name = "spdlog", version = "1.15.0.bcr.3")
 bazel_dep(name = "nlohmann_json", version = "3.11.3.bcr.1")
+
+# Hedron's Compile Commands Extractor for Bazel
+# https://github.com/hedronvision/bazel-compile-commands-extractor
+bazel_dep(name = "hedron_compile_commands", dev_dependency = True)
+git_override(
+    module_name = "hedron_compile_commands",
+    commit = "4f28899228fb3ad0126897876f147ca15026151e",
+    remote = "https://github.com/hedronvision/bazel-compile-commands-extractor.git",
+)
