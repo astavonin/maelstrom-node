@@ -24,6 +24,9 @@ use_repo(
 bazel_dep(name = "spdlog", version = "1.15.0.bcr.3")
 bazel_dep(name = "nlohmann_json", version = "3.11.3.bcr.1")
 
+#tests
+bazel_dep(name = "googletest", version = "1.15.2")
+
 # Hedron's Compile Commands Extractor for Bazel
 # https://github.com/hedronvision/bazel-compile-commands-extractor
 bazel_dep(name = "hedron_compile_commands", dev_dependency = True)
