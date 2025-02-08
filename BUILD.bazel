@@ -17,3 +17,18 @@ cc_library(
         "@spdlog",
     ],
 )
+
+cc_test(
+    name = "node_test",
+    srcs = [
+        "tests/message_test.cpp",
+    ],
+    copts = [
+        "-std=c++23",
+    ],
+    deps = [
+        ":maelstrom_node",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)

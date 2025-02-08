@@ -1,9 +1,12 @@
 #pragma once
 
+#include <compare>
+#include <iostream>
 #include <memory>
 #include <nlohmann/json.hpp>
 #include <string>
 #include <string_view>
+#include <unordered_map>
 
 namespace maelstrom_node
 {
@@ -11,31 +14,82 @@ namespace maelstrom_node
 class message;
 using message_ptr = std::shared_ptr<message>;
 
+namespace msg_field
+{
+
+struct node_id {
+    using type = std::string;
+
+    static constexpr const char *type_name() { return "node_id"; }
+};
+
+struct node_ids {
+    using type = std::vector<std::string>;
+
+    static constexpr const char *type_name() { return "node_ids"; }
+};
+
+struct topology {
+    using type = std::unordered_map<std::string, std::vector<std::string>>;
+
+    static constexpr const char *type_name() { return "topology"; }
+};
+
+struct msg_id {
+    using type = int;
+
+    static constexpr const char *type_name() { return "msg_id"; }
+};
+
+struct source {
+    using type = std::string;
+
+    static constexpr const char *type_name() { return "src"; }
+};
+
+struct destination {
+    using type = std::string;
+
+    static constexpr const char *type_name() { return "dest"; }
+};
+
+struct id {
+    using type = int;
+
+    static constexpr const char *type_name() { return "id"; }
+};
+
+struct data_type {
+    using type = std::string;
+
+    static constexpr const char *type_name() { return "type"; }
+};
+
+template <typename T>
+concept is_message_field
+    = std::is_same_v<T, msg_field::source> || std::is_same_v<T, msg_field::destination>
+      || std::is_same_v<T, msg_field::id>;
+
+} // namespace msg_field
+
 class message
 {
-public:
     class payload
     {
     public:
         payload() = default;
 
         template <typename T>
-        [[nodiscard]] auto get_value( const std::string_view field ) const
+        [[nodiscard]] auto get_value() const
         {
-            return data_.value( field, T{} );
+            return data_.value( T::type_name(), typename T::type{} );
         }
 
         template <typename T>
-        void set_value( const std::string_view field, T value )
+        void set_value( T::type value )
         {
-            data_[field] = value;
+            data_[T::type_name()] = value;
         }
-
-        [[nodiscard]] std::string type() const;
-        void                      type( const std::string &type );
-        [[nodiscard]] std::string node_id() const;
-        [[nodiscard]] std::string node_ids() const;
-        [[nodiscard]] int         msg_id() const;
 
     private:
         friend class message;
@@ -47,8 +101,9 @@ public:
         nlohmann::json data_;
     };
 
+public:
     message();
-    explicit message( const std::string &data );
+    explicit message( std::string_view data );
     ~message()                            = default;
     message( const message &msg )         = default;
     message( message && )                 = delete;
@@ -57,20 +112,30 @@ public:
 
     [[nodiscard]] std::string as_string();
 
-    std::string source() const { return data_.value( "src", "" ); }
+    template <typename T>
+    [[nodiscard]] auto get_value() const
+    {
+        if constexpr( msg_field::is_message_field<T> ) {
+            return data_.value( T::type_name(), typename T::type{} );
+        } else {
+            return payload_.data_.value( T::type_name(), typename T::type{} );
+        }
+    }
 
-    void source( const std::string_view &src ) { data_["src"] = src; }
-
-    std::string destination() const { return data_.value( "dest", "" ); }
-
-    void destination( const std::string_view &dst ) { data_["dest"] = dst; }
-
-    payload &payload() { return payload_; }
+    template <typename T>
+    void set_value( T::type value )
+    {
+        if constexpr( msg_field::is_message_field<T> ) {
+            data_[T::type_name()] = value;
+        } else {
+            payload_.data_[T::type_name()] = value;
+        }
+    }
 
     [[nodiscard]] message_ptr make_replay() const;
 
 protected:
-    void init( const std::string &data );
+    void init( std::string_view data );
 
 private:
     nlohmann::json data_;

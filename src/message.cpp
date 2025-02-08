@@ -16,31 +16,28 @@ message::message()
     data_["body"] = nullptr;
 }
 
-message::message( const std::string &data )
+message::message( std::string_view data )
 {
     init( data );
 }
 
-void message::init( const std::string &data )
+void message::init( std::string_view data )
 {
-    try
-    {
+    try {
         data_ = json::parse( data );
 
         auto fields = std::vector{ "body", "src", "dest" };
 
-        if( !std::ranges::all_of( fields, [this]( const auto &field )
-                                  { return data_.contains( field ); } ) )
-        {
+        if( !std::ranges::all_of( fields, [this]( const auto &field ) {
+                return data_.contains( field );
+            } ) ) {
             throw std::logic_error( std::format(
                 "invalid object \"{}\", one of {} is missing", data, fields ) );
         }
         payload_.data( data_.at( "body" ) );
-    }
-    catch( json::exception &ex )
-    {
-        throw std::logic_error( std::format(
-            "unable to parce: \"{}\", error: {}", data, ex.what() ) );
+    } catch( json::exception &ex ) {
+        throw std::logic_error(
+            std::format( "unable to parce: \"{}\", error: {}", data, ex.what() ) );
     }
 }
 
@@ -63,31 +60,5 @@ void message::init( const std::string &data )
 
     return replay;
 }
-
-[[nodiscard]] std::string message::payload::type() const
-{
-    return data_.value( "type", "" );
-}
-
-void message::payload::type( const std::string &type )
-{
-    data_["type"] = type;
-}
-
-[[nodiscard]] std::string message::payload::node_id() const
-{
-    return get_value<std::string>( "node_id" );
-}
-
-[[nodiscard]] std::string message::payload::node_ids() const
-{
-    throw std::logic_error( "not implemented yet" );
-    // return data_.value( "node_id", "" );
-};
-
-[[nodiscard]] int message::payload::msg_id() const
-{
-    return get_value<int>( "msg_id" );
-};
 
 } // namespace maelstrom_node
