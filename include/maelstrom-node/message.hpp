@@ -1,7 +1,5 @@
 #pragma once
 
-#include <compare>
-#include <iostream>
 #include <memory>
 #include <nlohmann/json.hpp>
 #include <string>
@@ -20,49 +18,55 @@ namespace msg_field
 struct node_id {
     using type = std::string;
 
-    static constexpr const char *type_name() { return "node_id"; }
+    static constexpr std::string_view type_name() { return "node_id"; }
 };
 
 struct node_ids {
     using type = std::vector<std::string>;
 
-    static constexpr const char *type_name() { return "node_ids"; }
+    static constexpr std::string_view type_name() { return "node_ids"; }
 };
 
 struct topology {
     using type = std::unordered_map<std::string, std::vector<std::string>>;
 
-    static constexpr const char *type_name() { return "topology"; }
+    static constexpr std::string_view type_name() { return "topology"; }
 };
 
 struct msg_id {
     using type = int;
 
-    static constexpr const char *type_name() { return "msg_id"; }
+    static constexpr std::string_view type_name() { return "msg_id"; }
 };
 
 struct source {
     using type = std::string;
 
-    static constexpr const char *type_name() { return "src"; }
+    static constexpr std::string_view type_name() { return "src"; }
 };
 
 struct destination {
     using type = std::string;
 
-    static constexpr const char *type_name() { return "dest"; }
+    static constexpr std::string_view type_name() { return "dest"; }
 };
 
 struct id {
     using type = int;
 
-    static constexpr const char *type_name() { return "id"; }
+    static constexpr std::string_view type_name() { return "id"; }
 };
 
 struct data_type {
     using type = std::string;
 
-    static constexpr const char *type_name() { return "type"; }
+    static constexpr std::string_view type_name() { return "type"; }
+};
+
+struct in_reply_to {
+    using type = int;
+
+    static constexpr std::string_view type_name() { return "in_reply_to"; }
 };
 
 template <typename T>
@@ -74,33 +78,6 @@ concept is_message_field
 
 class message
 {
-    class payload
-    {
-    public:
-        payload() = default;
-
-        template <typename T>
-        [[nodiscard]] auto get_value() const
-        {
-            return data_.value( T::type_name(), typename T::type{} );
-        }
-
-        template <typename T>
-        void set_value( T::type value )
-        {
-            data_[T::type_name()] = value;
-        }
-
-    private:
-        friend class message;
-
-        void data( nlohmann::json &data ) { data_ = data; }
-
-        nlohmann::json &data() { return data_; }
-
-        nlohmann::json data_;
-    };
-
 public:
     message();
     explicit message( std::string_view data );
@@ -118,7 +95,7 @@ public:
         if constexpr( msg_field::is_message_field<T> ) {
             return data_.value( T::type_name(), typename T::type{} );
         } else {
-            return payload_.data_.value( T::type_name(), typename T::type{} );
+            return data_["body"].value( T::type_name(), typename T::type{} );
         }
     }
 
@@ -128,19 +105,17 @@ public:
         if constexpr( msg_field::is_message_field<T> ) {
             data_[T::type_name()] = value;
         } else {
-            payload_.data_[T::type_name()] = value;
+            data_["body"][T::type_name()] = value;
         }
     }
 
-    [[nodiscard]] message_ptr make_replay() const;
+    [[nodiscard]] message_ptr make_reply() const;
 
 protected:
     void init( std::string_view data );
 
 private:
     nlohmann::json data_;
-
-    class payload payload_;
 };
 
 class sender

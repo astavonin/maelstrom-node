@@ -34,7 +34,6 @@ void message::init( std::string_view data )
             throw std::logic_error( std::format(
                 "invalid object \"{}\", one of {} is missing", data, fields ) );
         }
-        payload_.data( data_.at( "body" ) );
     } catch( json::exception &ex ) {
         throw std::logic_error(
             std::format( "unable to parce: \"{}\", error: {}", data, ex.what() ) );
@@ -43,20 +42,19 @@ void message::init( std::string_view data )
 
 [[nodiscard]] std::string message::as_string()
 {
-    data_.at( "body" ) = payload_.data();
-    auto msg_string    = data_.dump();
+    auto msg_string = data_.dump();
     boost::trim_left( msg_string );
     boost::trim_right( msg_string );
     return msg_string;
 }
 
-[[nodiscard]] message_ptr message::make_replay() const
+[[nodiscard]] message_ptr message::make_reply() const
 {
     auto replay = std::make_shared<message>();
 
-    replay->data_["src"]                  = data_.at( "dest" );
-    replay->data_["dest"]                 = data_.at( "src" );
-    replay->payload_.data_["in_reply_to"] = payload_.data_.at( "msg_id" );
+    replay->data_["src"]                 = data_.at( "dest" );
+    replay->data_["dest"]                = data_.at( "src" );
+    replay->data_["body"]["in_reply_to"] = data_["body"].at( "msg_id" );
 
     return replay;
 }

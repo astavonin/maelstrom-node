@@ -22,6 +22,20 @@ TEST( Message, WriteTest )
     EXPECT_EQ( msg.get_value<mm::source>(), "c42" );
 }
 
+TEST( Message, MakeReplay )
+{
+    constexpr std::string_view init_msg
+        = R"({"body":{"msg_id":1,"node_id":"n4","node_ids":["n1","n2","n3","n4","n5"],
+        "type":"init"},"dest":"n4","id":3,"src":"c3"})";
+    maelstrom_message msg( init_msg );
+    auto              repl = msg.make_reply();
+
+    EXPECT_EQ( repl->get_value<mm::source>(), msg.get_value<mm::destination>() );
+    EXPECT_EQ( repl->get_value<mm::destination>(), msg.get_value<mm::source>() );
+    EXPECT_EQ( repl->get_value<mm::destination>(), msg.get_value<mm::source>() );
+    EXPECT_EQ( repl->get_value<mm::in_reply_to>(), msg.get_value<mm::msg_id>() );
+}
+
 TEST( Message, CommonFields )
 {
     constexpr std::string_view init_msg
