@@ -9,9 +9,6 @@
 namespace maelstrom_node
 {
 
-class message;
-using message_ptr = std::shared_ptr<message>;
-
 namespace msg_field
 {
 
@@ -76,6 +73,9 @@ concept is_message_field
 
 } // namespace msg_field
 
+class message;
+using message_ptr = std::shared_ptr<message>;
+
 class message
 {
 public:
@@ -109,10 +109,25 @@ public:
         }
     }
 
-    [[nodiscard]] message_ptr make_reply() const;
+    template <typename T>
+    T get_value_raw( std::string_view field_name, bool is_payload = true )
+    {
+        if( is_payload ) { return data_["body"].value( field_name, T{} ); }
 
-protected:
-    void init( std::string_view data );
+        return data_.value( field_name, T{} );
+    }
+
+    template <typename T>
+    void set_value_raw( std::string_view field_name, T value, bool is_payload = true )
+    {
+        if( is_payload ) {
+            data_["body"][field_name] = value;
+        } else {
+            data_[field_name] = value;
+        }
+    }
+
+    [[nodiscard]] message_ptr make_reply( bool send_ok = true ) const;
 
 private:
     nlohmann::json data_;
@@ -128,7 +143,8 @@ public:
     sender &operator=( sender && )      = default;
     sender &operator=( const sender & ) = default;
 
-    virtual void send( message_ptr message ) = 0;
+    virtual void                      send( message_ptr message ) = 0;
+    [[nodiscard]] virtual std::string node_id() const             = 0;
 };
 
 } // namespace maelstrom_node

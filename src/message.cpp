@@ -18,11 +18,6 @@ message::message()
 
 message::message( std::string_view data )
 {
-    init( data );
-}
-
-void message::init( std::string_view data )
-{
     try {
         data_ = json::parse( data );
 
@@ -48,13 +43,17 @@ void message::init( std::string_view data )
     return msg_string;
 }
 
-[[nodiscard]] message_ptr message::make_reply() const
+[[nodiscard]] message_ptr message::make_reply( bool send_ok ) const
 {
     auto replay = std::make_shared<message>();
 
     replay->data_["src"]                 = data_.at( "dest" );
     replay->data_["dest"]                = data_.at( "src" );
     replay->data_["body"]["in_reply_to"] = data_["body"].at( "msg_id" );
+    if( send_ok ) {
+        replay->set_value<msg_field::data_type>( get_value<msg_field::data_type>()
+                                                 + "_ok" );
+    }
 
     return replay;
 }

@@ -18,11 +18,12 @@ public:
 
     void send( message_ptr message ) override;
 
+    [[nodiscard]] std::string node_id() const override;
+
 protected:
     void handle_read( const boost::system::error_code &error,
                       std::size_t                      bytes_transferred );
-    void signal_handler( const boost::system::error_code &error,
-                         int                              signal_number );
+    void signal_handler( const boost::system::error_code &error, int signal_number );
 
 private:
     using stream_ptr = std::unique_ptr<asio::posix::stream_descriptor>;

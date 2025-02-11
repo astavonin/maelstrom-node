@@ -71,7 +71,6 @@ void node::handle_read( const boost::system::error_code &error,
             node_id_ = msg->get_value<msg_field::node_id>();
 
             auto init_ok = msg->make_reply();
-            init_ok->set_value<msg_field::data_type>( "init_ok" );
 
             this->send( init_ok );
         } else {
@@ -99,6 +98,11 @@ void node::send( message_ptr message )
                                spdlog::error( "unable to write: {}", error.message() );
                            }
                        } );
+}
+
+[[nodiscard]] std::string node::node_id() const
+{
+    return node_id_;
 }
 
 } // namespace maelstrom_node

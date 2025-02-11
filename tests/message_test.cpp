@@ -1,28 +1,48 @@
 #include "maelstrom-node/message.hpp"
 
 #include "gtest/gtest.h"
+#include <memory>
 #include <string_view>
 
 using maelstrom_message = maelstrom_node::message;
 namespace mm            = maelstrom_node::msg_field;
 
-TEST( Message, WriteTest )
+class MessageTest : public testing::Test
 {
-    constexpr std::string_view init_msg
+public:
+    MessageTest()
+    {
+        init_msg_ = std::make_shared<maelstrom_node::message>( init_msg_str_ );
+    }
+
+protected:
+    static constexpr std::string_view init_msg_str_
         = R"({"body":{"msg_id":1,"node_id":"n4","node_ids":["n1","n2","n3","n4","n5"],
         "type":"init"},"dest":"n4","id":3,"src":"c3"})";
-    maelstrom_message msg( init_msg );
+    maelstrom_node::message_ptr init_msg_;
+};
 
-    EXPECT_EQ( msg.get_value<mm::data_type>(), "init" );
-    msg.set_value<mm::data_type>( "init_ok" );
-    EXPECT_EQ( msg.get_value<mm::data_type>(), "init_ok" );
+TEST_F( MessageTest, WriteReadRaw )
+{
+    EXPECT_EQ( init_msg_->get_value_raw<std::string>( "node_id" ), "n4" );
 
-    EXPECT_EQ( msg.get_value<mm::source>(), "c3" );
-    msg.set_value<mm::source>( "c42" );
-    EXPECT_EQ( msg.get_value<mm::source>(), "c42" );
+    constexpr std::string_view new_val = "42";
+    init_msg_->set_value_raw( "node_id", new_val );
+    EXPECT_EQ( init_msg_->get_value_raw<std::string>( "node_id" ), new_val );
 }
 
-TEST( Message, MakeReplay )
+TEST_F( MessageTest, WriteTest )
+{
+    EXPECT_EQ( init_msg_->get_value<mm::data_type>(), "init" );
+    init_msg_->set_value<mm::data_type>( "init_ok" );
+    EXPECT_EQ( init_msg_->get_value<mm::data_type>(), "init_ok" );
+
+    EXPECT_EQ( init_msg_->get_value<mm::source>(), "c3" );
+    init_msg_->set_value<mm::source>( "c42" );
+    EXPECT_EQ( init_msg_->get_value<mm::source>(), "c42" );
+}
+
+TEST_F( MessageTest, MakeReplay )
 {
     constexpr std::string_view init_msg
         = R"({"body":{"msg_id":1,"node_id":"n4","node_ids":["n1","n2","n3","n4","n5"],
@@ -34,28 +54,23 @@ TEST( Message, MakeReplay )
     EXPECT_EQ( repl->get_value<mm::destination>(), msg.get_value<mm::source>() );
     EXPECT_EQ( repl->get_value<mm::destination>(), msg.get_value<mm::source>() );
     EXPECT_EQ( repl->get_value<mm::in_reply_to>(), msg.get_value<mm::msg_id>() );
+    EXPECT_EQ( repl->get_value<mm::data_type>(), "init_ok" );
+
+    auto repl_nok = init_msg_->make_reply( false );
+    EXPECT_EQ( repl_nok->get_value<mm::data_type>(), "" );
 }
 
-TEST( Message, CommonFields )
+TEST_F( MessageTest, CommonFields )
 {
-    constexpr std::string_view init_msg
-        = R"({"body":{"msg_id":1,"node_id":"n4","node_ids":["n1","n2","n3","n4","n5"],
-        "type":"init"},"dest":"n4","id":3,"src":"c3"})";
-    maelstrom_message msg( init_msg );
-
-    EXPECT_EQ( msg.get_value<mm::msg_id>(), 1 );
-    EXPECT_EQ( msg.get_value<mm::node_id>(), "n4" );
+    EXPECT_EQ( init_msg_->get_value<mm::msg_id>(), 1 );
+    EXPECT_EQ( init_msg_->get_value<mm::node_id>(), "n4" );
 }
 
-TEST( Message, InitMessage )
+TEST_F( MessageTest, InitMessage )
 {
-    constexpr std::string_view init_msg
-        = R"({"body":{"msg_id":1,"node_id":"n4","node_ids":["n1","n2","n3","n4","n5"],
-        "type":"init"},"dest":"n4","id":3,"src":"c3"})";
-    maelstrom_message  msg( init_msg );
     mm::node_ids::type exp = { "n1", "n2", "n3", "n4", "n5" };
 
-    auto ids = msg.get_value<mm::node_ids>();
+    auto ids = init_msg_->get_value<mm::node_ids>();
 
     EXPECT_EQ( ids, exp );
 }
