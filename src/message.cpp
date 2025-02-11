@@ -18,11 +18,6 @@ message::message()
 
 message::message( std::string_view data )
 {
-    init( data );
-}
-
-void message::init( std::string_view data )
-{
     try {
         data_ = json::parse( data );
 

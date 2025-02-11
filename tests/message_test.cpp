@@ -1,10 +1,35 @@
 #include "maelstrom-node/message.hpp"
 
 #include "gtest/gtest.h"
+#include <memory>
 #include <string_view>
 
 using maelstrom_message = maelstrom_node::message;
 namespace mm            = maelstrom_node::msg_field;
+
+class MessageTest : public testing::Test
+{
+public:
+    MessageTest()
+    {
+        init_msg_ = std::make_shared<maelstrom_node::message>( init_msg_str_ );
+    }
+
+protected:
+    static constexpr std::string_view init_msg_str_
+        = R"({"body":{"msg_id":1,"node_id":"n4","node_ids":["n1","n2","n3","n4","n5"],
+        "type":"init"},"dest":"n4","id":3,"src":"c3"})";
+    maelstrom_node::message_ptr init_msg_;
+};
+
+TEST_F( MessageTest, WriteReadRaw )
+{
+    EXPECT_EQ( init_msg_->get_value_raw<std::string>( "node_id" ), "n4" );
+
+    constexpr std::string_view new_val = "42";
+    init_msg_->set_value_raw( "node_id", new_val );
+    EXPECT_EQ( init_msg_->get_value_raw<std::string>( "node_id" ), new_val );
+}
 
 TEST( Message, WriteTest )
 {
