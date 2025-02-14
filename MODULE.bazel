@@ -5,6 +5,7 @@ module(
 )
 
 # C++ toolchain
+bazel_dep(name = "rules_cc", version = "0.1.1")
 
 # 3rd-party C++ libraries
 bazel_dep(name = "rules_boost", repo_name = "com_github_nelhage_rules_boost")

@@ -59,26 +59,29 @@ void node::handle_read( const boost::system::error_code &error,
     }
 
     buffer_.commit( bytes_transferred );
-    std::string tmp{ asio::buffers_begin( buffer_.data() ),
-                     asio::buffers_end( buffer_.data() ) };
+    std::istream stream( &buffer_ );
+    std::string  line;
+
+    while( std::getline( stream, line ) ) {
+        message_ptr msg;
+        try {
+            msg = std::make_shared<message>( line );
+            spdlog::info( "node({}) message content: {}", node_id_, msg->as_string() );
+            if( msg->get_value<msg_field::data_type>() == "init" ) {
+                node_id_ = msg->get_value<msg_field::node_id>();
+
+                auto init_ok = msg->make_reply();
+
+                this->send( init_ok );
+            } else {
+                handler_->process( this, msg );
+            }
+        } catch( std::exception &ex ) {
+            spdlog::error( "node({}) processing error: {}", node_id_, ex.what() );
+        }
+    }
     buffer_.consume( bytes_transferred );
 
-    message_ptr msg;
-    try {
-        msg = std::make_shared<message>( tmp );
-        spdlog::info( "node({}) message content: {}", node_id_, msg->as_string() );
-        if( msg->get_value<msg_field::data_type>() == "init" ) {
-            node_id_ = msg->get_value<msg_field::node_id>();
-
-            auto init_ok = msg->make_reply();
-
-            this->send( init_ok );
-        } else {
-            handler_->process( this, msg );
-        }
-    } catch( std::exception &ex ) {
-        spdlog::error( "node({}) processing error: {}", node_id_, ex.what() );
-    }
     input_stream_->async_read_some(
         buffer_.prepare( BUFF_SIZE ),
         [this]( const auto &error, auto bytes_transferred ) {
